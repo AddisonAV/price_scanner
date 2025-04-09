@@ -175,4 +175,3 @@ cython_debug/
 
 # Ignore configuration files
 /config/config.yaml
-/config/*.yaml
