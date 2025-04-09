@@ -2,11 +2,16 @@
 
 import datetime
 import logging
-from apscheduler.schedulers.blocking import BlockingScheduler
+#from apscheduler.schedulers.blocking import BlockingScheduler
 from config_loader import load_config
+from scrapers.amazon_scraper import AmazonScraper
 
 # Load configuration from YAML file
 config = load_config()
+
+# Test the configuration
+print("Telegram Chat ID:", config['telegram']['chat_id'])
+print("First Product:", config['products'][0]['name'])
 
 # Dummy functions for demonstration. Replace these with your actual implementations.
 def get_price(url):
@@ -95,11 +100,33 @@ def job():
 
 def main():
     """Main entry point to start the scheduler."""
-    scheduler = BlockingScheduler()
-    scheduler.add_job(job, 'interval', seconds=config["scheduler"]["scrape_interval"])
+    #scheduler = BlockingScheduler()
+    #scheduler.add_job(job, 'interval', seconds=config["scheduler"]["scrape_interval"])
     logging.info("Scheduler started. Press Ctrl+C to exit.")
     try:
-        scheduler.start()
+        #scheduler.start()
+        scraper = AmazonScraper()
+
+        products = config['products']
+        if not products:
+            logging.error("No products found in the configuration.")
+            return
+        
+        for product in products:
+            if not product.get('urls'):
+                logging.error(f"No URLs found for product: {product['name']}")
+                continue
+            print(f"\nProduct: {product['name']}")
+            
+            # Scrape each URL for the first product
+            for url in product['urls']:
+                product_data = scraper.scrape_product(url)
+                if product_data and product_data['success']:
+                    print(f"Price: {product_data['price']}")
+                    print(f"url: {product_data['url']}")
+                else:
+                    print("Failed to scrape product")
+        
     except (KeyboardInterrupt, SystemExit):
         logging.info("Scheduler stopped.")
 

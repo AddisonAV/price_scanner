@@ -12,8 +12,14 @@ products:
     
   - product_id: "2"  
     name: "iPhone 13 Pro Max"
-    url: "https://www.ebay.com/itm/254678923456"
+    urls: "https://www.ebay.com/itm/254678923456"
     check_interval: 7200  # 2 hours in seconds
+
+# Website Configuration
+websites:
+  amazon:
+    base_url: "https://www.amazon.com/dp/"
+    currency: "USD"
 
 # Database Configuration
 database:
@@ -27,12 +33,12 @@ logging:
 
 scraping:
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    request_timeout: 15  # in seconds
-    headers:
-      Accept-Language: "en-US,en;q=0.9"
-      Accept-Encoding: "gzip, deflate"
-    retry_attempts: 3    # Number of retry attempts for failed requests
-    delay_between_requests: 5  # seconds between requests to avoid blocking
+  request_timeout: 15  # in seconds
+  headers:
+    Accept-Language: "en-US,en;q=0.9"
+    Accept-Encoding: "gzip, deflate"
+  retry_attempts: 3    # Number of retry attempts for failed requests
+  delay_between_requests: 5  # seconds between requests to avoid blocking
 
 
 # Alert Configuration
