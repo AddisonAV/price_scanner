@@ -7,19 +7,19 @@ telegram:
 products:
   - product_id: "1"  # This is a unique identifier for the product, will be used in the database
     name: "PlayStation 5 Console"
-    url: "https://www.amazon.com/dp/B08X3W4J7X"
-    check_interval: 3600  # 1 hour in seconds
+    urls: 
+      - "https://www.amazon.com/dp/B08X3W4J7X"
     
   - product_id: "2"  
     name: "iPhone 13 Pro Max"
-    urls: "https://www.ebay.com/itm/254678923456"
-    check_interval: 7200  # 2 hours in seconds
+    urls: 
+      - "https://www.ebay.com/itm/254678923456"
 
 # Website Configuration
 websites:
   amazon:
-    base_url: "https://www.amazon.com/dp/"
-    currency: "USD"
+    base_url: "https://www.amazon.com.br/dp/"
+    currency: "R$"
 
 # Database Configuration
 database:
@@ -32,13 +32,13 @@ logging:
   file: "app.log"
 
 scraping:
-  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+  user_agents: 
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
   request_timeout: 15  # in seconds
   headers:
-    Accept-Language: "en-US,en;q=0.9"
+    Accept-Language: "pt-BR,pt;q=0.9"
     Accept-Encoding: "gzip, deflate"
   retry_attempts: 3    # Number of retry attempts for failed requests
-  delay_between_requests: 5  # seconds between requests to avoid blocking
 
 
 # Alert Configuration
