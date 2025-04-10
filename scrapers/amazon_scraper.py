@@ -1,13 +1,17 @@
 # scrapers/amazon_scraper.py
+
 import requests
 import random
-import time
+import logging
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from typing import Optional, Dict
-import logging
 from config_loader import load_config
 
+# Importing the base scraper class that this scraper will extend
+from scrapers.scraper import BaseScraper, register_scraper
+
+# Selenium imports
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -22,22 +26,17 @@ logger = logging.getLogger(__name__)
 # Load configuration from YAML file
 config = load_config()
 
-class AmazonScraper:
+# Register the scraper with a URL pattern
+@register_scraper(r"amazon\.com(\.br)?")
+class AmazonScraper(BaseScraper):
+    """Amazon Scraper class to scrape product prices and titles from Amazon pages."""
+
     def __init__(self):
-        self.headers = {
-            'User-Agent': random.choice(config['scraping']['user_agents']),
-            'Accept-Language': config['scraping']['headers']['Accept-Language'],
-            'Accept-Encoding': config['scraping']['headers']['Accept-Encoding'],
-            'X-Forwarded-For' : config['scraping']['headers']['X-Forwarded-For']
-        }
-        self.base_url = config['websites']['amazon']['base_url']
+        self.user_agent = random.choice(config['scraping']['user_agents'])
         self.currency = config['websites']['amazon']['currency']
         self.timeout = config['scraping']['request_timeout']
         self.retry_attempts = config['scraping']['retry_attempts']
-        self.delay_range = config['scraping']['delay_between_requests']
 
-    def _get_random_delay(self):
-        return random.uniform(self.delay_range, self.delay_range + 2)  # Adding a small jitter to the delay
 
     def _validate_url(self, url: str) -> bool:
         """Validate Amazon product URL structure"""
@@ -56,12 +55,6 @@ class AmazonScraper:
             'span#subscriptionPrice span.a-price span.a-offscreen',
             'div#centerCol span.a-price span.a-offscreen',
             'span.a-price span[aria-hidden="true"]'
-            #'span.a-price span.a-offscreen',  # Most common
-            #'span#priceblock_ourprice',
-            #'span#priceblock_dealprice',
-            #'div#apex_desktop span.a-price-whole',
-            #'span.aok-offscreen',
-            #'span#tp_price_block_total_price_ww'
         ]
 
         for selector in selectors:
@@ -102,7 +95,7 @@ class AmazonScraper:
                 
                 options = Options()
                 options.add_argument("--headless=new")
-                options.add_argument(f"user-agent={random.choice(self.headers['User-Agent'])}")
+                options.add_argument(f"user-agent={random.choice(self.user_agent)}")
                 options.add_argument("--disable-blink-features=AutomationControlled")
                 
                 # Set up Selenium WebDriver
@@ -112,10 +105,10 @@ class AmazonScraper:
                 
                 
                 # Wait for price to load
-                WebDriverWait(driver, 10).until(
+                WebDriverWait(driver, self.timeout).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "div#centerCol"))
                 )
-                driver.save_screenshot('last_page.png')
+              
                 # 3. Get fully rendered page source
                 page_source = driver.page_source
                 
