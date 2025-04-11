@@ -1,3 +1,4 @@
+import time
 import requests
 import random
 import logging
@@ -30,8 +31,11 @@ class MercadoLivreScraper(BaseScraper):
         self.currency = config['websites']['mercadolivre']['currency']
         self.timeout = config['scraping']['request_timeout']
         self.retry_attempts = config['scraping']['retry_attempts']
+        self.delay_range = (1, config['scraping']['timeout_between_requests'])
 
-
+    def _get_random_delay(self):
+        return random.uniform(*self.delay_range)
+    
     def _extract_price(self, soup: BeautifulSoup) -> Optional[float]:
         """Extract price from page using multiple possible selectors"""
         selectors = [
@@ -70,6 +74,7 @@ class MercadoLivreScraper(BaseScraper):
 
         for attempt in range(self.retry_attempts):
             try:
+                time.sleep(self._get_random_delay())
                 
                 options = Options()
                 options.add_argument("--headless=new")
