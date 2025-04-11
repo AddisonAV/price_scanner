@@ -15,9 +15,6 @@ def register_scraper(pattern: str):
 
 class BaseScraper(ABC):
     @abstractmethod
-    def _validate_url(self, url: str) -> bool:
-        """Validate URL structure"""
-        pass
     def _extract_price(self, soup) -> Optional[float]:
         """Extract price from page using multiple possible selectors"""
         pass

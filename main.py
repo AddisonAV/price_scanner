@@ -34,7 +34,7 @@ def main():
             if not product.get('urls'):
                 logging.error(f"No URLs found for product: {product['name']}")
                 continue
-            print(f"\nProduct: {product['name']}")
+            logging.info(f"Scrapping product: {product['name']}")
             
             # Scrape each URL for the first product
             for url in product['urls']:
@@ -49,9 +49,7 @@ def main():
                 logging.info(f"Scraping URL: {url}")
                 product_data = scraper.scrape_product(url)
                 if product_data and product_data['success']:
-                    print(f"Title: {product_data['title']}")
-                    print(f"Price: {product_data['price']}")
-                    print(f"url: {product_data['url']}")
+                    logging.info(f"Scraped product data: {product_data}")
                 else:
                     print("Failed to scrape product")
         
