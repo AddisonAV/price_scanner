@@ -3,7 +3,7 @@
 import logging
 #from apscheduler.schedulers.blocking import BlockingScheduler
 from config_loader import load_config
-from scrapers.scraper import get_scraper
+from scrapers import scraper as Scraper
 
 # Load configuration from YAML file
 config = load_config()
@@ -35,26 +35,30 @@ def main():
                 logging.error(f"No URLs found for product: {product['name']}")
                 continue
             logging.info(f"Scrapping product: {product['name']}")
+            logging.error(f"Scrapping product: {product['name']}")
             
+            product_data = dict() # Initialize product data dictionary
             # Scrape each URL for the first product
             for url in product['urls']:
 
                 # Get the appropriate scraper for the URL
-                scraper = get_scraper(url)
+                scraper = Scraper.get_scraper(url)
                 if not scraper:
                     logging.error(f"No scraper available for URL: {url}")
                     continue
                 
                 # Scrape the product data
                 logging.info(f"Scraping URL: {url}")
-                product_data = scraper.scrape_product(url)
-                if product_data and product_data['success']:
-                    logging.info(f"Scraped product data: {product_data}")
-                else:
-                    print("Failed to scrape product")
+                product_data = Scraper.compare_prices(product_data, scraper.scrape_product(url)) 
+            if product_data and product_data['success']:
+                logging.info(f"Scraped product data: {product_data}")
+            else:
+                logging.error(f"Failed to scrape product data for {product['name']}")
         
     except (KeyboardInterrupt, SystemExit):
         logging.info("Scheduler stopped.")
+
+    logging.info("Scheduler finished.")
 
 if __name__ == "__main__":
     main()
