@@ -4,6 +4,8 @@ import logging
 #from apscheduler.schedulers.blocking import BlockingScheduler
 from config_loader import load_config
 from scrapers import scraper as Scraper
+from database.database import DatabaseHandler  # Import the database handler
+from analysis.visualizer import plot_price_history
 
 # Load configuration from YAML file
 config = load_config()
@@ -18,6 +20,9 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s:%(levelname)s:%(message)s"
 )
+
+# Initialize the database handler
+db_handler = DatabaseHandler()
 
 def main():
     """Main entry point to start the scheduler."""
@@ -52,8 +57,19 @@ def main():
                 product_data = Scraper.compare_prices(product_data, scraper.scrape_product(url)) 
             if product_data and product_data['success']:
                 logging.info(f"Scraped product data: {product_data}")
+
+                # Save data to the database (adjust mapping as needed)
+                db_handler.insert_data(
+                    name=product.get('name', ''),
+                    url=product_data.get('url', ''),
+                    currency=product_data.get('currency', ''),
+                    price=product_data.get('price', 0)
+                )
             else:
                 logging.error(f"Failed to scrape product data for {product['name']}")
+
+            # Display the scraped data
+            plot_price_history(product['name'])  # Call the function to plot the price history
         
     except (KeyboardInterrupt, SystemExit):
         logging.info("Scheduler stopped.")

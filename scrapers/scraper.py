@@ -39,6 +39,8 @@ def compare_prices(current_product: Dict, new_product: Dict) -> Dict:
     """Compare two prices between two products and returns the lowest product."""
     if 'price' not in current_product:
         return new_product
+    if 'price' not in new_product:
+        return current_product
     if new_product['price'] < current_product['price']:
         return new_product
     return current_product

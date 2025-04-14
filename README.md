@@ -41,14 +41,14 @@ Price Scanner is a Python-based tool for scraping product prices and details fro
 
     ```sh
     python -m venv venv
-    .\venv\Scripts\activate
+    .\.venv\Scripts\activate
     ```
 
     - For PowerShell:
     
      ```sh
     python -m venv venv
-    .\venv\Scripts\Activate.ps1
+    .\.venv\Scripts\Activate.ps1
     ```
 
 3. **Install dependencies:**

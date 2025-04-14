@@ -175,3 +175,6 @@ cython_debug/
 
 # Ignore configuration files
 /config/config.yaml
+
+# Ignore database files
+scraper_data.db

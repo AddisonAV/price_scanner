@@ -39,7 +39,8 @@ class MercadoLivreScraper(BaseScraper):
     def _extract_price(self, soup: BeautifulSoup) -> Optional[float]:
         """Extract price from page using multiple possible selectors"""
         selectors = [
-            'div.ui-pdp-price__main-container span.andes-money-amount'
+            'div#price span.andes-money-amount',
+            #'div.ui-pdp-price__main-container span.andes-money-amount'
         ]
 
         for selector in selectors:
@@ -87,9 +88,9 @@ class MercadoLivreScraper(BaseScraper):
                 
                 # Wait for price to load
                 WebDriverWait(driver, self.timeout).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div#ui-pdp-main-container"))
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div#price"))
                 )
-              
+            
                 # 3. Get fully rendered page source
                 page_source = driver.page_source
                 
