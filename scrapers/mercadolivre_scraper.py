@@ -1,5 +1,3 @@
-# scrapers/amazon_scraper.py
-
 import time
 import requests
 import random
@@ -24,26 +22,25 @@ from selenium.webdriver.support import expected_conditions as EC
 config = load_config()
 
 # Register the scraper with a URL pattern
-@register_scraper(r"amazon\.com(\.br)?")
-class AmazonScraper(BaseScraper):
-    """Amazon Scraper class to scrape product prices and titles from Amazon pages."""
+@register_scraper(r"mercadolivre\.com(\.br)?")
+class MercadoLivreScraper(BaseScraper):
+    """MercadoLivre Scraper class to scrape product prices and titles from MercadoLivre pages."""
 
     def __init__(self):
         self.user_agent = random.choice(config['scraping']['user_agents'])
-        self.currency = config['websites']['amazon']['currency']
+        self.currency = config['websites']['mercadolivre']['currency']
         self.timeout = config['scraping']['request_timeout']
         self.retry_attempts = config['scraping']['retry_attempts']
         self.delay_range = (1, config['scraping']['timeout_between_requests'])
 
     def _get_random_delay(self):
         return random.uniform(*self.delay_range)
-
+    
     def _extract_price(self, soup: BeautifulSoup) -> Optional[float]:
         """Extract price from page using multiple possible selectors"""
         selectors = [
-            'span#subscriptionPrice span.a-price span.a-offscreen',
-            'div#centerCol span.a-price span.a-offscreen',
-            'span.a-price span[aria-hidden="true"]'
+            'div#price span.andes-money-amount',
+            #'div.ui-pdp-price__main-container span.andes-money-amount'
         ]
 
         for selector in selectors:
@@ -62,8 +59,7 @@ class AmazonScraper(BaseScraper):
     def _extract_product_title(self, soup: BeautifulSoup) -> Optional[str]:
         """Extract product title"""
         title_selectors = [
-            'span#productTitle',
-            'h1#title'
+            'h1.ui-pdp-title'
         ]
         
         for selector in title_selectors:
@@ -92,9 +88,9 @@ class AmazonScraper(BaseScraper):
                 
                 # Wait for price to load
                 WebDriverWait(driver, self.timeout).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div#centerCol"))
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div#price"))
                 )
-              
+            
                 # 3. Get fully rendered page source
                 page_source = driver.page_source
                 
@@ -126,9 +122,10 @@ class AmazonScraper(BaseScraper):
                 logging.info("Selenium driver closed")
 
     def get_product_id(self, url: str) -> Optional[str]:
-        """Extract ASIN from Amazon URL"""
+        """Extract product ID from MercadoLivre URL"""
+        # Example URL: https://www.mercadolivre.com.br/p/MLB18390579
         parsed = urlparse(url)
         path_segments = parsed.path.split('/')
-        if 'dp' in path_segments:
-            return path_segments[path_segments.index('dp') + 1]
+        if 'p' in path_segments:
+            return path_segments[path_segments.index('p') + 1]
         return None

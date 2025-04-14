@@ -15,9 +15,6 @@ def register_scraper(pattern: str):
 
 class BaseScraper(ABC):
     @abstractmethod
-    def _validate_url(self, url: str) -> bool:
-        """Validate URL structure"""
-        pass
     def _extract_price(self, soup) -> Optional[float]:
         """Extract price from page using multiple possible selectors"""
         pass
@@ -37,3 +34,13 @@ def get_scraper(url: str) -> BaseScraper:
         if re.search(pattern, url, re.IGNORECASE):
             return scraper_class()
     raise ValueError(f"No scraper available for URL: {url}")
+
+def compare_prices(current_product: Dict, new_product: Dict) -> Dict:
+    """Compare two prices between two products and returns the lowest product."""
+    if 'price' not in current_product:
+        return new_product
+    if 'price' not in new_product:
+        return current_product
+    if new_product['price'] < current_product['price']:
+        return new_product
+    return current_product

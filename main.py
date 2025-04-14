@@ -3,7 +3,9 @@
 import logging
 #from apscheduler.schedulers.blocking import BlockingScheduler
 from config_loader import load_config
-from scrapers.scraper import get_scraper
+from scrapers import scraper as Scraper
+from database.database import DatabaseHandler  # Import the database handler
+from analysis.visualizer import plot_price_history
 
 # Load configuration from YAML file
 config = load_config()
@@ -18,6 +20,9 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s:%(levelname)s:%(message)s"
 )
+
+# Initialize the database handler
+db_handler = DatabaseHandler()
 
 def main():
     """Main entry point to start the scheduler."""
@@ -34,29 +39,42 @@ def main():
             if not product.get('urls'):
                 logging.error(f"No URLs found for product: {product['name']}")
                 continue
-            print(f"\nProduct: {product['name']}")
+            logging.info(f"Scrapping product: {product['name']}")
+            logging.error(f"Scrapping product: {product['name']}")
             
+            product_data = dict() # Initialize product data dictionary
             # Scrape each URL for the first product
             for url in product['urls']:
 
                 # Get the appropriate scraper for the URL
-                scraper = get_scraper(url)
+                scraper = Scraper.get_scraper(url)
                 if not scraper:
                     logging.error(f"No scraper available for URL: {url}")
                     continue
                 
                 # Scrape the product data
                 logging.info(f"Scraping URL: {url}")
-                product_data = scraper.scrape_product(url)
-                if product_data and product_data['success']:
-                    print(f"Title: {product_data['title']}")
-                    print(f"Price: {product_data['price']}")
-                    print(f"url: {product_data['url']}")
-                else:
-                    print("Failed to scrape product")
+                product_data = Scraper.compare_prices(product_data, scraper.scrape_product(url)) 
+            if product_data and product_data['success']:
+                logging.info(f"Scraped product data: {product_data}")
+
+                # Save data to the database (adjust mapping as needed)
+                db_handler.insert_data(
+                    name=product.get('name', ''),
+                    url=product_data.get('url', ''),
+                    currency=product_data.get('currency', ''),
+                    price=product_data.get('price', 0)
+                )
+            else:
+                logging.error(f"Failed to scrape product data for {product['name']}")
+
+            # Display the scraped data
+            plot_price_history(product['name'])  # Call the function to plot the price history
         
     except (KeyboardInterrupt, SystemExit):
         logging.info("Scheduler stopped.")
+
+    logging.info("Scheduler finished.")
 
 if __name__ == "__main__":
     main()
