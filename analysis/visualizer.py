@@ -1,12 +1,22 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime
 from database.database import DatabaseHandler
+from config_loader import load_config
+import os
 
-def plot_price_history(product_name):
+# Load configuration from YAML file
+config = load_config()
+matplotlib.use('Agg')
+
+def plot_price_history(product_name, save_to_file: bool = True):
     db = DatabaseHandler()
     # Each row is (id, name, url, currency, price, timestamp)
     data = db.fetch_data_by_name(product_name)
+
+    save_path = config['graph']['save_path']
+    os.makedirs(save_path, exist_ok=True)
     
     # Parse timestamps and extract prices.
     timestamps = [datetime.strptime(row[5], "%Y-%m-%d %H:%M:%S") for row in data]
@@ -19,6 +29,10 @@ def plot_price_history(product_name):
     
     # Plot price history with markers
     ax.plot(timestamps, prices, marker='o', linestyle='-', color='#0099ff', label='Price')
+    
+    # Annotate each data point with its price value
+    for x, y in zip(timestamps, prices):
+        ax.annotate(f'{y:.2f}', xy=(x, y), xytext=(0, 8), textcoords="offset points", ha="center", fontsize=10, color='black')
     
     
     ax.set_title(f"Price History for {product_name}", fontsize=16)
@@ -34,7 +48,16 @@ def plot_price_history(product_name):
     ax.legend(fontsize=12)
     
     plt.tight_layout()
-    plt.show()
+    
+    if save_to_file:
+        filename = f"{product_name.replace(' ', '_')}_graph.png"
+        full_path = os.path.join(save_path, filename)
+        plt.savefig(full_path)
+        plt.close(fig)
+        return full_path
+    else:
+        plt.show()
+        return None
     
 if __name__ == "__main__":
       # Required for the trend line calculation

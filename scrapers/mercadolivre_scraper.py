@@ -37,24 +37,50 @@ class MercadoLivreScraper(BaseScraper):
         return random.uniform(*self.delay_range)
     
     def _extract_price(self, soup: BeautifulSoup) -> Optional[float]:
-        """Extract price from page using multiple possible selectors"""
+        """Extract lowest price from page using multiple possible selectors"""
         selectors = [
             'div#price span.andes-money-amount',
             #'div.ui-pdp-price__main-container span.andes-money-amount'
         ]
 
+        prices_found = []
+
         for selector in selectors:
-            price_element = soup.select_one(selector)
-            if price_element:
+            main_element = soup.select_one(selector)
+            if main_element:
                 try:
-                    price_text = price_element.get_text(strip=True)
-                    return float(price_text.replace(self.currency, '').replace(',', '.').strip())
+                    price_text = main_element.get_text(strip=True)
+                    prices_value = float(price_text.replace(self.currency, '').replace(',', '.').strip())
+                    prices_found.append(prices_value)
                 except (ValueError, AttributeError) as e:
                     logging.warning(f"Price extraction failed with selector {selector}: {e} \n\n{price_text}\n\n")
                     continue
+        
+        # Now, locate the additional offers container and try to extract additional prices
+        # This website often selects diferent prices for different sellers so check all displayed prices
+        # in the offers container
 
+        offers_container = soup.find("div", class_="ui-pdp-buy-box-offers__desktop")
+        if offers_container:
+            # Locate the specific sub-container with the second line price
+            second_line_container = offers_container.find_all("div", class_="ui-pdp-price__second-line")
+            for sec_container in second_line_container:
+                offer_prices = sec_container.find("span", class_="andes-money-amount")
+                if offer_prices:
+                    try:
+                        price_text = offer_prices.get_text(strip=True)
+                        price_value = float(price_text.replace(self.currency, '').replace(',', '.').strip())
+                        prices_found.append(price_value)
+                    except (ValueError, AttributeError) as e:
+                        logging.warning(f"Offers price extraction failed: {e}")
+                        continue
+                    
+        if prices_found:
+            lowest_price = min(prices_found)
+            return lowest_price
         logging.error("No valid price element found")
         return None
+    
 
     def _extract_product_title(self, soup: BeautifulSoup) -> Optional[str]:
         """Extract product title"""
