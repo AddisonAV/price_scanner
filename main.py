@@ -4,8 +4,9 @@ import sys
 import asyncio
 import logging
 from datetime import datetime
+import time
 #from apscheduler.schedulers.blocking import BlockingScheduler  # Uncomment this line
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from config_loader import load_config
 from scrapers import scraper as Scraper
 from database.database import DatabaseHandler  # Import the database handler
@@ -28,10 +29,10 @@ logging.basicConfig(
 # Initialize the database handler
 db_handler = DatabaseHandler()
 
-def main():
-    """Main entry point to start the scheduler."""
-
-    logging.info("Scheduler started. Press Ctrl+C to exit.")
+def job():
+    """Job to be run by the scheduler."""
+    logging.info("Scheduler job started.")
+    
     try:
 
         products = config['products']
@@ -84,17 +85,29 @@ def main():
             # Send Telegram alert with the graph image
             send_alert(message, image_path)
         
-    except (KeyboardInterrupt, SystemExit):
-        logging.info("Scheduler stopped.")
-
+    except Exception as e:
+        logging.error(f"Job error: {e}")
     logging.info("Scheduler job finished.")
 
-if __name__ == "__main__":
-    # Schedule the main job using APScheduler to run every 12 hours
-    scheduler = BlockingScheduler()
-    scheduler.add_job(main, 'interval', hours=1, next_run_time=datetime.now())
+def main():
+    """Main entry point to start the scheduler."""
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(job, 'interval', hours=12, next_run_time=datetime.now())
+    scheduler.start()
+    logging.info("Scheduler started. Press Ctrl+C to exit.")
     try:
-        scheduler.start()
+        # Main loop waiting to be interrupted.
+        while True:
+            time.sleep(1)
     except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()  # Gracefully stop the scheduler.
+        print("Requesting shutdown...")
+        # Handle shutdown gracefully
+        logging.info("Shutdown requested. Shutting down scheduler...")
+        scheduler.shutdown(wait=False)
         logging.info("Scheduler terminated.")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
+    
