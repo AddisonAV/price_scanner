@@ -1,18 +1,22 @@
 # main.py
 
+import sys
+import asyncio
 import logging
-#from apscheduler.schedulers.blocking import BlockingScheduler
+from datetime import datetime
+#from apscheduler.schedulers.blocking import BlockingScheduler  # Uncomment this line
+from apscheduler.schedulers.blocking import BlockingScheduler
 from config_loader import load_config
 from scrapers import scraper as Scraper
 from database.database import DatabaseHandler  # Import the database handler
 from analysis.visualizer import plot_price_history
+from bot.telegram_bot import send_alert
+
+if sys.platform.startswith('win'):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Load configuration from YAML file
 config = load_config()
-
-# Test the configuration
-print("Telegram Chat ID:", config['telegram']['chat_id'])
-print("First Product:", config['products'][0]['name'])
 
 # Set up basic logging using the configuration from YAML
 logging.basicConfig(
@@ -40,7 +44,6 @@ def main():
                 logging.error(f"No URLs found for product: {product['name']}")
                 continue
             logging.info(f"Scrapping product: {product['name']}")
-            logging.error(f"Scrapping product: {product['name']}")
             
             product_data = dict() # Initialize product data dictionary
             # Scrape each URL for the first product
@@ -68,13 +71,30 @@ def main():
             else:
                 logging.error(f"Failed to scrape product data for {product['name']}")
 
-            # Display the scraped data
-            plot_price_history(product['name'])  # Call the function to plot the price history
+            # Generate graph image and get the file path
+            image_path = plot_price_history(product['name'], save_to_file=True)
+
+            # Compose a message with product info
+            message = (
+                f"Product: {product.get('name', '')}\n"
+                f"Price: {product_data.get('currency', '')} {product_data.get('price', 0)}\n"
+                f"URL: {product_data.get('url', '')}"
+            )
+            
+            # Send Telegram alert with the graph image
+            send_alert(message, image_path)
         
     except (KeyboardInterrupt, SystemExit):
         logging.info("Scheduler stopped.")
 
-    logging.info("Scheduler finished.")
+    logging.info("Scheduler job finished.")
 
 if __name__ == "__main__":
-    main()
+    # Schedule the main job using APScheduler to run every 12 hours
+    scheduler = BlockingScheduler()
+    scheduler.add_job(main, 'interval', hours=1, next_run_time=datetime.now())
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()  # Gracefully stop the scheduler.
+        logging.info("Scheduler terminated.")

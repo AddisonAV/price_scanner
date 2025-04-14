@@ -50,7 +50,7 @@ alerts:
 
 # Graph Configuration
 graph:
-  save_path: "graphs/"
+  save_path: "analysis/graph/"
   days_to_show: 30  # Show price history for last X days
   theme: "ggplot"   # matplotlib style
   colors:

@@ -178,3 +178,4 @@ cython_debug/
 
 # Ignore database files
 scraper_data.db
+analysis/graph/

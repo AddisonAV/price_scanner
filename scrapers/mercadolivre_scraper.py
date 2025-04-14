@@ -62,19 +62,18 @@ class MercadoLivreScraper(BaseScraper):
 
         offers_container = soup.find("div", class_="ui-pdp-buy-box-offers__desktop")
         if offers_container:
-            offers_prices = offers_container.find_all("span", class_="andes-money-amount")
-            for element in offers_prices:
-                # aditional check for a span class that contains the price
-
-                if element.find("span", class_="andes-visually-hidden") is None:
-                    continue
-                try:
-                    price_text = element.get_text(strip=True)
-                    price_value = float(price_text.replace(self.currency, '').replace(',', '.').strip())
-                    prices_found.append(price_value)
-                except (ValueError, AttributeError) as e:
-                    logging.warning(f"Offers price extraction failed: {e}")
-                    continue
+            # Locate the specific sub-container with the second line price
+            second_line_container = offers_container.find_all("div", class_="ui-pdp-price__second-line")
+            for sec_container in second_line_container:
+                offer_prices = sec_container.find("span", class_="andes-money-amount")
+                if offer_prices:
+                    try:
+                        price_text = offer_prices.get_text(strip=True)
+                        price_value = float(price_text.replace(self.currency, '').replace(',', '.').strip())
+                        prices_found.append(price_value)
+                    except (ValueError, AttributeError) as e:
+                        logging.warning(f"Offers price extraction failed: {e}")
+                        continue
                     
         if prices_found:
             lowest_price = min(prices_found)
