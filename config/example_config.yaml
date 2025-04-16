@@ -9,16 +9,20 @@ products:
     name: "PlayStation 5 Console"
     urls: 
       - "https://www.amazon.com/dp/B08X3W4J7X"
-    
-  - product_id: "2"  
-    name: "iPhone 13 Pro Max"
-    urls: 
-      - "https://www.ebay.com/itm/254678923456"
+  - product_id: "2"
+    name: "Fone de Ouvido Galaxy Buds FE"
+    urls:
+      - "https://www.mercadolivre.com.br/p/MLB29595951"
+  
 
-# Website Configuration
+# Website Configuration, This is the supported websites
+# and their base URLs
 websites:
   amazon:
     base_url: "https://www.amazon.com.br/dp/"
+    currency: "R$"
+  mercadolivre:
+    base_url: "https://www.mercadolivre.com.br/p/"
     currency: "R$"
 
 # Database Configuration
