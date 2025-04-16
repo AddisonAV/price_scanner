@@ -92,9 +92,12 @@ def job():
 def main():
     """Main entry point to start the scheduler."""
     scheduler = BackgroundScheduler()
-    scheduler.add_job(job, 'interval', hours=12, next_run_time=datetime.now())
+
+    # 'cron' for defining the job schedule every day at 9:00 AM
+    scheduler.add_job(job, 'cron', hour=9, minute=0, next_run_time=datetime.now())
     scheduler.start()
     logging.info("Scheduler started. Press Ctrl+C to exit.")
+    print("Scheduler started. Press Ctrl+C to exit.")
     try:
         # Main loop waiting to be interrupted.
         while True:
